@@ -406,9 +406,12 @@ async function intro() {
   ctx.imageSmoothingQuality = 'high';
   const unit = or.width / m.canvas.width;
   const mcx = m.canvas.width * fx, mcy = m.canvas.height * fy;
-  const st = { scale: 1, rot: 0, cut: 0 };
+  // z is zoom progress in log space (scale = S^z), so equal steps of z feel like equal speed
+  const st = { z: 0, rot: 0, cut: 0 };
+  const lnS = Math.log(S);
   const draw = () => {
-    gsap.set(word, { scale: st.scale });
+    const scale = Math.exp(lnS * st.z);
+    gsap.set(word, { scale });
     gsap.set(o, { rotation: st.rot });
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.globalCompositeOperation = 'source-over';
@@ -418,7 +421,7 @@ async function intro() {
     ctx.globalCompositeOperation = 'destination-out';
     ctx.translate(C.x, C.y);
     ctx.rotate((st.rot * Math.PI) / 180);
-    ctx.scale(st.scale * unit, st.scale * unit);
+    ctx.scale(scale * unit, scale * unit);
     ctx.drawImage(m.canvas, -mcx, -mcy);
   };
   draw();
@@ -433,14 +436,17 @@ async function intro() {
     // the room starts to glow through the counter
     .set(st, { cut: 1 }, 1.0)
     .fromTo(dim, { opacity: 1 }, { opacity: 0.5, duration: 1.2, ease: 'sine.inOut' }, 1.05)
-    // the camera flies through the O while it turns on its side and C and V make room
-    .to(st, { scale: S, duration: 1.6, ease: 'power4.in' }, 1.8)
-    .to(st, { rot: 90, duration: 1.6, ease: 'sine.inOut' }, 1.8)
-    .to(before, { x: -push, duration: 1.6, ease: 'sine.inOut' }, 1.8)
-    .to(after, { x: push, duration: 1.6, ease: 'sine.inOut' }, 1.8)
-    .to(dim, { opacity: 0, duration: 1.0, ease: 'power2.in' }, 2.35);
+    // the camera flies through the O while it turns on its side and C and V make room:
+    // a small pull back, a slow creep, then a surge that eases off as the room arrives
+    .to(st, { z: -0.025, duration: 0.35, ease: 'power2.out' }, 1.75)
+    .to(st, { z: 0.1, duration: 0.45, ease: 'sine.inOut' }, 2.1)
+    .to(st, { z: 1, duration: 1.1, ease: 'expo.inOut' }, 2.55)
+    .to(st, { rot: 90, duration: 1.6, ease: 'power3.inOut' }, 1.85)
+    .to(before, { x: -push, duration: 1.6, ease: 'power3.inOut' }, 1.85)
+    .to(after, { x: push, duration: 1.6, ease: 'power3.inOut' }, 1.85)
+    .to(dim, { opacity: 0, duration: 0.9, ease: 'power2.inOut' }, 2.75);
   // the room settles as we arrive (kept outside the timeline so it can outlast the intro)
-  gsap.to(heroPic, { scale: 1, duration: 2.6, delay: 3.15, ease: 'power2.out' });
+  gsap.to(heroPic, { scale: 1, duration: 2.6, delay: 3.3, ease: 'power2.out' });
 }
 
 /* ---------- boot ---------- */
