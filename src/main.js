@@ -348,6 +348,7 @@ async function intro() {
   if (!reduced) { lenis.stop(); document.documentElement.classList.add('is-loading'); }
   const loader = $('#loader');
   const shade = $('#loaderShade');
+  const dim = $('#loaderDim');
   const word = $('#loaderWord');
   word.innerHTML = 'ALCOVE'.split('').map((c) => `<span${c === 'O' ? ' class="lo-o"' : ''}>${c}</span>`).join('');
   const letters = $$('span', word);
@@ -374,33 +375,72 @@ async function intro() {
   if (reduced) { landed(); return; }
   const m = counterMask(o);
   if (!m) { gsap.to(loader, { autoAlpha: 0, duration: 0.6, onComplete: landed }); return; }
-  shade.style.setProperty('--counter', `url(${m.url})`);
-  const sync = () => {
-    const r = o.getBoundingClientRect();
-    shade.style.setProperty('--mw', `${r.width}px`);
-    shade.style.setProperty('--mh', `${r.height}px`);
-    shade.style.setProperty('--mx', `${r.left}px`);
-    shade.style.setProperty('--my', `${r.top}px`);
+
+  // Geometry, measured before anything is transformed. C is the centre of the O's
+  // counter on screen: the word scales about it and the O turns about it, so it never moves.
+  const wr = word.getBoundingClientRect();
+  const or = o.getBoundingClientRect();
+  const fx = (m.box.x0 + m.box.x1) / 2, fy = (m.box.y0 + m.box.y1) / 2;
+  const C = { x: or.left + or.width * fx, y: or.top + or.height * fy };
+  gsap.set(word, { transformOrigin: `${C.x - wr.left}px ${C.y - wr.top}px` });
+  gsap.set(o, { transformOrigin: `${or.width * fx}px ${or.height * fy}px` });
+
+  // Lying on its side the O is wider than it was tall, so its neighbours step aside
+  const inkW = or.width * (m.ink.x1 - m.ink.x0);
+  const inkH = or.height * (m.ink.y1 - m.ink.y0);
+  const push = (inkH - inkW) / 2 + or.width * 0.05;
+  const i = letters.indexOf(o);
+  const before = letters.slice(0, i), after = letters.slice(i + 1);
+
+  // Scale at which the sideways counter (a across, b up after the turn) covers the viewport
+  const a = (or.height * (m.box.y1 - m.box.y0)) / 2;
+  const b = (or.width * (m.box.x1 - m.box.x0)) / 2;
+  const S = Math.hypot(innerWidth / 2 / a, innerHeight / 2 / b) * 1.12;
+
+  // The shade is a canvas redrawn every frame with the counter punched out,
+  // using the same scale and rotation as the letters so the two stay locked together
+  const ctx = shade.getContext('2d');
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  shade.width = Math.round(innerWidth * dpr);
+  shade.height = Math.round(innerHeight * dpr);
+  ctx.imageSmoothingQuality = 'high';
+  const unit = or.width / m.canvas.width;
+  const mcx = m.canvas.width * fx, mcy = m.canvas.height * fy;
+  const st = { scale: 1, rot: 0, cut: 0 };
+  const draw = () => {
+    gsap.set(word, { scale: st.scale });
+    gsap.set(o, { rotation: st.rot });
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = '#433a30';
+    ctx.fillRect(0, 0, innerWidth, innerHeight);
+    if (!st.cut) return;
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.translate(C.x, C.y);
+    ctx.rotate((st.rot * Math.PI) / 180);
+    ctx.scale(st.scale * unit, st.scale * unit);
+    ctx.drawImage(m.canvas, -mcx, -mcy);
   };
+  draw();
+  gsap.ticker.add(draw);
 
-  // Scale about the centre of the O's counter until it swallows the viewport
-  const ox = o.offsetLeft + o.offsetWidth * (m.box.x0 + m.box.x1) / 2;
-  const oy = o.offsetTop + o.offsetHeight * (m.box.y0 + m.box.y1) / 2;
-  const a = (o.offsetWidth * (m.box.x1 - m.box.x0)) / 2;
-  const b = (o.offsetHeight * (m.box.y1 - m.box.y0)) / 2;
-  const S = Math.hypot(innerWidth / 2 / a, innerHeight / 2 / b) * 1.15;
-  gsap.set(word, { transformOrigin: `${ox}px ${oy}px` });
+  const heroPic = $('#heroMedia img');
+  gsap.set(heroPic, { scale: 1.14 });
 
-  const dim = document.createElement('div');
-  dim.style.cssText = 'position:absolute;inset:0;background:#433a30;';
-  loader.insertBefore(dim, shade);
-
-  gsap.timeline({ onComplete: landed })
-    .from(letters, { autoAlpha: 0, filter: 'blur(18px)', x: 40, duration: 1.2, stagger: 0.1, ease: 'power2.out' })
-    .add(() => { sync(); shade.classList.add('is-cut'); }, 1.0)
-    .to(dim, { opacity: 0.55, duration: 0.9, ease: 'power1.inOut' }, 1.1)
-    .to(word, { scale: S, duration: 1.7, ease: 'expo.in', onUpdate: sync }, 2.1)
-    .to(dim, { opacity: 0, duration: 1.1, ease: 'power2.in' }, 2.5);
+  gsap.timeline({ onComplete: () => { gsap.ticker.remove(draw); landed(); } })
+    .from(letters, { autoAlpha: 0, filter: 'blur(18px)', x: 40, duration: 1.3, stagger: 0.09, ease: 'power3.out' })
+    // the room starts to glow through the counter
+    .set(st, { cut: 1 }, 1.0)
+    .fromTo(dim, { opacity: 1 }, { opacity: 0.5, duration: 1.2, ease: 'sine.inOut' }, 1.05)
+    // the O turns on its side while C and V make room
+    .to(st, { rot: 90, duration: 1.5, ease: 'power3.inOut' }, 1.8)
+    .to(before, { x: -push, duration: 1.5, ease: 'power3.inOut' }, 1.8)
+    .to(after, { x: push, duration: 1.5, ease: 'power3.inOut' }, 1.8)
+    // then the camera flies through it
+    .to(st, { scale: S, duration: 1.75, ease: 'power4.in' }, 3.0)
+    .to(dim, { opacity: 0, duration: 1.2, ease: 'power2.in' }, 3.35);
+  // the room settles as we arrive (kept outside the timeline so it can outlast the intro)
+  gsap.to(heroPic, { scale: 1, duration: 2.6, delay: 3.75, ease: 'power2.out' });
 }
 
 /* ---------- boot ---------- */

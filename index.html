@@ -9,9 +9,10 @@
   <link rel="preload" as="image" href="./img/hero.jpg" />
 </head>
 <body>
-  <!-- Intro: the wordmark blurs in, then the camera flies through the O into the hero -->
+  <!-- Intro: the wordmark blurs in, the O turns on its side, then the camera flies through it into the hero -->
   <div class="loader" id="loader" aria-hidden="true">
-    <div class="loader__shade" id="loaderShade"></div>
+    <div class="loader__dim" id="loaderDim"></div>
+    <canvas class="loader__shade" id="loaderShade"></canvas>
     <div class="loader__word" id="loaderWord"></div>
   </div>
 

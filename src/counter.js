@@ -1,7 +1,7 @@
 // Renders the glyph of `el` (an inline-block span with line-height 1) to a canvas
 // and flood-fills its counter, so the inside of the "O" can be used as a CSS mask.
-// Returns the mask as a data URL plus the counter's bounding box (0–1 of the span box),
-// or null while the span has no size yet.
+// Returns the mask (canvas + data URL) with the counter's and the glyph's bounding boxes
+// (0–1 of the span box), or null while the span has no size yet.
 export function counterMask(el, fontPx = 600) {
   const cs = getComputedStyle(el);
   const k = fontPx / parseFloat(cs.fontSize);
@@ -20,6 +20,13 @@ export function counterMask(el, fontPx = 600) {
   ctx.fillText(ch, 0, base);
 
   const ink = ctx.getImageData(0, 0, W, H).data;
+  let ix0 = W, iy0 = H, ix1 = 0, iy1 = 0;
+  for (let p = 0; p < W * H; p++) {
+    if (ink[p * 4 + 3] <= 110) continue;
+    const x = p % W, y = (p / W) | 0;
+    if (x < ix0) ix0 = x; if (x > ix1) ix1 = x;
+    if (y < iy0) iy0 = y; if (y > iy1) iy1 = y;
+  }
   const cx = Math.round((m.actualBoundingBoxRight - m.actualBoundingBoxLeft) / 2);
   const cy = Math.round(base - (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2);
 
@@ -64,7 +71,12 @@ export function counterMask(el, fontPx = 600) {
   }
   ctx.clearRect(0, 0, W, H);
   ctx.putImageData(out, 0, 0);
-  return { url: canvas.toDataURL('image/png'), box: { x0: x0 / W, y0: y0 / H, x1: x1 / W, y1: y1 / H } };
+  return {
+    canvas,
+    url: canvas.toDataURL('image/png'),
+    box: { x0: x0 / W, y0: y0 / H, x1: x1 / W, y1: y1 / H },
+    ink: { x0: ix0 / W, y0: iy0 / H, x1: ix1 / W, y1: iy1 / H },
+  };
 }
 
 function dilate(src, W, H, r) {
