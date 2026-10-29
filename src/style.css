@@ -94,6 +94,7 @@ ul, ol { list-style: none; }
   font-family: var(--serif); color: var(--light);
   font-size: clamp(5rem, 21vw, 21rem); line-height: 1; white-space: nowrap;
   will-change: transform;
+  opacity: 0; /* shown by the intro once the serif has loaded */
 }
 .loader__word span, .mark__word span { display: inline-block; }
 html.is-loading body { overflow: hidden; }

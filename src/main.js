@@ -427,6 +427,7 @@ async function intro() {
   const heroPic = $('#heroMedia img');
   gsap.set(heroPic, { scale: 1.14 });
 
+  gsap.set(word, { opacity: 1 });
   gsap.timeline({ onComplete: () => { gsap.ticker.remove(draw); landed(); } })
     .from(letters, { autoAlpha: 0, filter: 'blur(18px)', x: 40, duration: 1.3, stagger: 0.09, ease: 'power3.out' })
     // the room starts to glow through the counter
