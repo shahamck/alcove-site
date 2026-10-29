@@ -434,13 +434,13 @@ async function intro() {
     .set(st, { cut: 1 }, 1.0)
     .fromTo(dim, { opacity: 1 }, { opacity: 0.5, duration: 1.2, ease: 'sine.inOut' }, 1.05)
     // the camera flies through the O while it turns on its side and C and V make room
-    .to(st, { scale: S, duration: 2.1, ease: 'power4.in' }, 1.8)
-    .to(st, { rot: 90, duration: 2.1, ease: 'sine.inOut' }, 1.8)
-    .to(before, { x: -push, duration: 2.1, ease: 'sine.inOut' }, 1.8)
-    .to(after, { x: push, duration: 2.1, ease: 'sine.inOut' }, 1.8)
-    .to(dim, { opacity: 0, duration: 1.3, ease: 'power2.in' }, 2.6);
+    .to(st, { scale: S, duration: 1.6, ease: 'power4.in' }, 1.8)
+    .to(st, { rot: 90, duration: 1.6, ease: 'sine.inOut' }, 1.8)
+    .to(before, { x: -push, duration: 1.6, ease: 'sine.inOut' }, 1.8)
+    .to(after, { x: push, duration: 1.6, ease: 'sine.inOut' }, 1.8)
+    .to(dim, { opacity: 0, duration: 1.0, ease: 'power2.in' }, 2.35);
   // the room settles as we arrive (kept outside the timeline so it can outlast the intro)
-  gsap.to(heroPic, { scale: 1, duration: 2.6, delay: 3.6, ease: 'power2.out' });
+  gsap.to(heroPic, { scale: 1, duration: 2.6, delay: 3.15, ease: 'power2.out' });
 }
 
 /* ---------- boot ---------- */
