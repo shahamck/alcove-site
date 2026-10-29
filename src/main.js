@@ -304,16 +304,22 @@ function setupMark() {
   fill.style.zIndex = -1;
   fill.style.backgroundImage = `url(./img/extra-fire.jpg)`;
 
+  // The mask is size-independent, so it is drawn once the word has a real size
+  let masked = false;
   const fit = () => {
     word.style.fontSize = '100px';
     const w = $$('span', word).reduce((s, el) => s + el.getBoundingClientRect().width, 0);
     const avail = word.clientWidth;
+    if (!w || !avail) return;
     word.style.fontSize = `${(100 * avail) / w * 0.995}px`;
+    if (masked) return;
+    const m = counterMask(o);
+    if (!m) return;
+    fill.style.webkitMaskImage = fill.style.maskImage = `url(${m.url})`;
+    masked = true;
   };
   fit();
   addEventListener('resize', fit);
-  const { url } = counterMask(o);
-  fill.style.webkitMaskImage = fill.style.maskImage = `url(${url})`;
   if (!finePointer) {
     ScrollTrigger.create({ trigger: mark, start: 'top 70%', onEnter: () => (fill.style.transform = 'scale(1)') });
     return;
@@ -367,6 +373,7 @@ async function intro() {
 
   if (reduced) { landed(); return; }
   const m = counterMask(o);
+  if (!m) { gsap.to(loader, { autoAlpha: 0, duration: 0.6, onComplete: landed }); return; }
   shade.style.setProperty('--counter', `url(${m.url})`);
   const sync = () => {
     const r = o.getBoundingClientRect();

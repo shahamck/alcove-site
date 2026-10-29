@@ -1,11 +1,13 @@
 // Renders the glyph of `el` (an inline-block span with line-height 1) to a canvas
 // and flood-fills its counter, so the inside of the "O" can be used as a CSS mask.
-// Returns the mask as a data URL plus the counter's bounding box (0–1 of the span box).
+// Returns the mask as a data URL plus the counter's bounding box (0–1 of the span box),
+// or null while the span has no size yet.
 export function counterMask(el, fontPx = 600) {
   const cs = getComputedStyle(el);
   const k = fontPx / parseFloat(cs.fontSize);
   const W = Math.ceil(el.offsetWidth * k);
   const H = Math.ceil(el.offsetHeight * k);
+  if (!(W > 0 && H > 0 && Number.isFinite(W) && Number.isFinite(H))) return null;
   const canvas = document.createElement('canvas');
   canvas.width = W;
   canvas.height = H;
