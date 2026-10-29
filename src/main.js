@@ -395,7 +395,7 @@ async function intro() {
   // Scale at which the sideways counter (a across, b up after the turn) covers the viewport
   const a = (or.height * (m.box.y1 - m.box.y0)) / 2;
   const b = (or.width * (m.box.x1 - m.box.x0)) / 2;
-  const S = Math.hypot(innerWidth / 2 / a, innerHeight / 2 / b) * 1.12;
+  const S = Math.hypot(innerWidth / 2 / a, innerHeight / 2 / b) * 1.2;
 
   // The shade is a canvas redrawn every frame with the counter punched out,
   // using the same scale and rotation as the letters so the two stay locked together
@@ -433,15 +433,14 @@ async function intro() {
     // the room starts to glow through the counter
     .set(st, { cut: 1 }, 1.0)
     .fromTo(dim, { opacity: 1 }, { opacity: 0.5, duration: 1.2, ease: 'sine.inOut' }, 1.05)
-    // the O turns on its side while C and V make room
-    .to(st, { rot: 90, duration: 1.5, ease: 'power3.inOut' }, 1.8)
-    .to(before, { x: -push, duration: 1.5, ease: 'power3.inOut' }, 1.8)
-    .to(after, { x: push, duration: 1.5, ease: 'power3.inOut' }, 1.8)
-    // then the camera flies through it
-    .to(st, { scale: S, duration: 1.75, ease: 'power4.in' }, 3.0)
-    .to(dim, { opacity: 0, duration: 1.2, ease: 'power2.in' }, 3.35);
+    // the camera flies through the O while it turns on its side and C and V make room
+    .to(st, { scale: S, duration: 2.1, ease: 'power4.in' }, 1.8)
+    .to(st, { rot: 90, duration: 2.1, ease: 'sine.inOut' }, 1.8)
+    .to(before, { x: -push, duration: 2.1, ease: 'sine.inOut' }, 1.8)
+    .to(after, { x: push, duration: 2.1, ease: 'sine.inOut' }, 1.8)
+    .to(dim, { opacity: 0, duration: 1.3, ease: 'power2.in' }, 2.6);
   // the room settles as we arrive (kept outside the timeline so it can outlast the intro)
-  gsap.to(heroPic, { scale: 1, duration: 2.6, delay: 3.75, ease: 'power2.out' });
+  gsap.to(heroPic, { scale: 1, duration: 2.6, delay: 3.6, ease: 'power2.out' });
 }
 
 /* ---------- boot ---------- */
